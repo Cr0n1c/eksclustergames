@@ -1,0 +1,3 @@
+#!/bin/bash
+
+kubectl get secrets log-rotate -o json | jq -r '.data.flag' | base64 -d

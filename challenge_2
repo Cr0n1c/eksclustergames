@@ -1,0 +1,16 @@
+#!/bin/bash
+
+function jwt-decode() {
+  sed 's/\./\n/g' <<< $(cut -d. -f1,2 <<< $1) | base64 --decode | jq
+}
+
+export JWT=$(kubectl get secrets $(kubectl get pods -o json | jq -r '.items[0].spec.imagePullSecrets[0].name') -o json | jq -r '.data.".dockerconfigjson"')
+export BEARER=$(jwt-decode $JWT | jq -r '.auths."index.docker.io/v1/".auth' | base64 -d)
+export USERNAME=$(echo $BEARER | cut -d : -f 1)
+export PASSWORD=$(echo $BEARER | cut -d : -f 2)
+export REGISTRY=$(kubectl get pods -o json | jq -r '.items[0].status.containerStatuses[0].image' | cut -d '/' -f 1)
+export IMAGE=$(kubectl get pods -o json | jq -r '.items[0].spec.containers[0].image')
+
+crane auth login $REGISTRY --username $USERNAME --password $PASSWORD
+crane config $IMAGE | jq -r '.history[2].created_by' | cut -d "'" -f 2 | cut -d "'" -f 1
+

