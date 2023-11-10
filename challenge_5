@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # Creating a token and ensuring we have the correct audience (this was a pita to figure out)
 export TOKEN=$(kubectl create token debug-sa --audience sts.amazonaws.com)
